@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Clue — Hoja de Anotaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Dark detective palette — deep ink navy w/ warm accents */
+    --paper:      oklch(0.19 0.018 260);  /* main bg */
+    --paper-2:    oklch(0.23 0.020 260);  /* cards */
+    --paper-edge: oklch(0.30 0.022 260);  /* borders */
+    --ink:        oklch(0.94 0.010 85);   /* primary text */
+    --ink-soft:   oklch(0.72 0.015 85);   /* secondary */
+    --ink-ghost:  oklch(0.52 0.018 260);  /* tertiary */
+    --rule:       oklch(0.30 0.020 260);  /* dividers */
+
+    /* Accents */
+    --crimson:    oklch(0.62 0.19 25);
+    --gold:       oklch(0.80 0.14 85);
+    --seal:       oklch(0.55 0.17 20);
+
+    /* Player colors — brighter for dark bg, matched chroma */
+    --p0: oklch(0.68 0.18 25);    /* rojo    */
+    --p1: oklch(0.70 0.16 240);   /* azul    */
+    --p2: oklch(0.72 0.16 150);   /* verde   */
+    --p3: oklch(0.78 0.14 80);    /* ámbar   */
+    --p4: oklch(0.65 0.18 305);   /* púrpura */
+    --p5: oklch(0.72 0.13 200);   /* cian    */
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.30), 0 2px 6px rgba(0,0,0,0.22);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.40), 0 12px 28px rgba(0,0,0,0.30);
+
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body { overscroll-behavior: none; }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 50% -200px, oklch(0.26 0.030 260), transparent 60%),
+      var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+    min-height: 100vh;
+    padding: 18px 14px 40px;
+    max-width: 520px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Subtle dot-grid like an evidence notebook */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, oklch(0.38 0.015 260) 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: 0.22;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  main { position: relative; z-index: 1; }
+
+  /* ═══════════════ HEADER ═══════════════ */
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 16px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .mark {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    font-style: italic;
+    color: var(--ink);
+    transform: translateY(5px);
+    background: var(--paper);
+    position: relative;
+  }
+  .mark::after {
+    content: '';
+    position: absolute; inset: -4px;
+    border: 1px dashed var(--ink-ghost);
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+
+  .wordmark {
+    font-family: 'Instrument Serif', serif;
+    font-size: 34px;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .wordmark em {
+    font-style: italic;
+    color: var(--crimson);
+  }
+
+  .case-meta {
+    text-align: right;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .case-meta .lbl { color: var(--ink-ghost); }
+  .case-meta .val { color: var(--ink); font-weight: 500; }
+
+  /* ═══════════════ PLAYER BAR ═══════════════ */
+  .players {
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 6px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .player {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 4px 7px;
+    border-radius: 9px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    font-family: inherit;
+    color: var(--ink-soft);
+    transition: background 0.18s, color 0.18s, transform 0.1s;
+    position: relative;
+  }
+  .player:active { transform: scale(0.97); }
+
+  .player .avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1.5px solid currentColor;
+    color: var(--_c);
+    display: grid; place-items: center;
+    font-family: 'Instrument Serif', serif;
+    font-size: 15px;
+    font-style: italic;
+    font-weight: 400;
+    transition: all 0.18s;
+  }
+
+  .player .pname {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ink-soft);
+  }
+
+  .player.active {
+    background: var(--_c);
+    color: oklch(0.15 0.02 260);
+  }
+  .player.active .avatar {
+    background: oklch(0.15 0.02 260);
+    color: var(--_c);
+    border-color: oklch(0.15 0.02 260);
+  }
+  .player.active .pname { color: oklch(0.15 0.02 260); }
+
+  .player[data-empty="true"] {
+    opacity: 0.45;
+  }
+  .player[data-empty="true"] .avatar {
+    border-style: dashed;
+  }
+
+  /* Edit bar */
+  .subbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+    margin-bottom: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+  }
+  .subbar .turn-ind { display: flex; align-items: center; gap: 6px; }
+  .subbar .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--_c, var(--ink)); }
+  .subbar button {
+    background: none; border: none; padding: 2px 6px;
+    font: inherit; letter-spacing: 0.08em;
+    color: var(--ink-soft); cursor: pointer;
+    border-radius: 4px;
+  }
+  .subbar button:hover { color: var(--ink); background: var(--paper-2); }
+
+  /* ═══════════════ SHEET ═══════════════ */
+  .sheet {
+    background: var(--paper);
+    border: 1px solid var(--paper-edge);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 14px 10px;
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .section-head:first-child { border-top: none; }
+
+  .section-head .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--ink-ghost);
+    padding: 2px 6px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+  }
+  .section-head .title {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 20px;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .section-head .title-en {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--ink-ghost);
+    text-transform: uppercase;
+    margin-left: auto;
+  }
+
+  .rows { padding: 2px 0 8px; }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: stretch;
+    min-height: 40px;
+    padding: 0 14px;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .row + .row { border-top: 1px dashed var(--rule); }
+  .row:hover { background: oklch(0.26 0.02 260); }
+
+  .row.solved {
+    background: color-mix(in oklch, var(--gold) 14%, transparent);
+  }
+  .row.solved::before {
+    content: '★';
+    position: absolute;
+    left: 2px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--gold);
+    font-size: 11px;
+  }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--ink);
+    padding-right: 10px;
+    user-select: none;
+  }
+  .row-label .idx {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--ink-ghost);
+    width: 18px;
+    flex-shrink: 0;
+  }
+
+  .row-label .envelope-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; color: var(--ink-ghost);
+    padding: 4px; margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .row:hover .envelope-btn { opacity: 0.6; }
+  .row.solved .envelope-btn { opacity: 1; color: var(--gold); }
+  .envelope-btn:hover { color: var(--crimson); opacity: 1 !important; }
+
+  .cells {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .cell {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-family: 'Instrument Serif', serif;
+    font-size: 19px;
+    line-height: 1;
+    color: var(--_c, var(--ink));
+    transition: all 0.12s;
+    user-select: none;
+    position: relative;
+  }
+  .cell:hover { background: var(--paper-2); }
+  .cell.active-col {
+    background: oklch(0.26 0.02 260);
+    border-color: var(--rule);
+  }
+  .cell.active-col.is-turn {
+    box-shadow: inset 0 0 0 1.5px var(--_c);
+    background: color-mix(in oklch, var(--_c) 16%, var(--paper));
+  }
+  .cell:active { transform: scale(0.88); }
+
+  /* Mark states */
+  .cell[data-state="has"] { color: var(--_c); }
+  .cell[data-state="no"]  { color: var(--ink-ghost); }
+  .cell[data-state="maybe"] { color: var(--_c); opacity: 0.7; }
+
+  .cell .glyph {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    pointer-events: none;
+  }
+  .cell[data-state="no"] .glyph { font-style: normal; font-family: 'IBM Plex Mono', monospace; font-size: 16px; }
+  .cell[data-state="maybe"] .glyph { font-style: italic; }
+
+  /* Turn indicator strip above active column */
+  .turn-strip {
+    height: 3px;
+    background: var(--rule);
+    margin: 0 14px;
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  .turn-strip .bead {
+    position: absolute;
+    top: -1px;
+    height: 5px;
+    background: var(--_c);
+    border-radius: 3px;
+    transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1), width 0.28s;
+  }
+
+  /* ═══════════════ LEGEND / FOOTER ═══════════════ */
+  .legend {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--paper-edge);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+  }
+  .legend-items { display: flex; gap: 14px; flex-wrap: wrap; }
+  .lg-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+  .lg-item .g {
+    width: 22px; height: 22px;
+    display: grid; place-items: center;
+    border-radius: 6px; background: var(--paper-2);
+    border: 1px solid var(--rule);
+    font-family: 'Instrument Serif', serif;
+    font-size: 15px; color: var(--ink);
+  }
+
+  .footer-actions {
+    display: flex; gap: 8px;
+    margin-top: 14px;
+    justify-content: center;
+  }
+  .footer-actions button {
+    flex: 1;
+    padding: 11px;
+    background: var(--paper);
+    border: 1px solid var(--paper-edge);
+    border-radius: 10px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .footer-actions button:hover {
+    color: var(--ink);
+    border-color: var(--ink-soft);
+  }
+  .footer-actions button.danger:hover {
+    color: var(--crimson);
+    border-color: var(--crimson);
+  }
+
+  /* Solution card */
+  .solution {
+    margin-top: 16px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, oklch(0.14 0.025 260), oklch(0.17 0.030 280));
+    color: var(--ink);
+    border: 1px solid oklch(0.32 0.025 260);
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .solution::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px dashed oklch(0.40 0.03 260);
+    border-radius: 11px;
+    pointer-events: none;
+  }
+  .solution .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .solution .hyp {
+    font-family: 'Instrument Serif', serif;
+    font-size: 19px;
+    line-height: 1.35;
+    font-style: italic;
+  }
+  .solution .hyp .slot {
+    display: inline-block;
+    min-width: 90px;
+    padding: 0 4px;
+    border-bottom: 1px dotted oklch(0.52 0.03 260);
+    color: oklch(0.55 0.03 260);
+    font-style: normal;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transform: translateY(-2px);
+  }
+  .solution .hyp .slot.filled {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 19px;
+    text-transform: none;
+    letter-spacing: 0;
+    transform: none;
+  }
+
+  /* ═══════════════ MODAL ═══════════════ */
+  .overlay {
+    position: fixed; inset: 0;
+    background: oklch(0.10 0.02 260 / 0.70);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    animation: fadein 0.18s ease;
+  }
+  .overlay.open { display: flex; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--paper-2);
+    border-radius: 16px;
+    padding: 22px 20px 18px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    animation: pop 0.22s cubic-bezier(0.18, 1, 0.3, 1.05);
+    border: 1px solid var(--paper-edge);
+  }
+  @keyframes pop {
+    from { transform: translateY(12px) scale(0.96); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .modal-head .title {
+    font-family: 'Instrument Serif', serif;
+    font-size: 22px;
+    font-style: italic;
+    color: var(--ink);
+  }
+  .modal-head .subt {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+  }
+
+  .name-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0;
+  }
+  .name-row .chip {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--_c);
+    color: oklch(0.15 0.02 260);
+    display: grid; place-items: center;
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 16px;
+    flex-shrink: 0;
+    border: 2px solid var(--paper-2);
+    box-shadow: 0 0 0 1px var(--_c);
+  }
+  .name-row .chip.dis {
+    background: var(--paper-2);
+    color: var(--ink-ghost);
+    box-shadow: 0 0 0 1px var(--rule);
+  }
+  .name-row input {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .name-row input:focus { border-color: var(--_c); }
+  .name-row input:disabled { opacity: 0.4; background: var(--paper); }
+  .name-row .toggle {
+    background: none;
+    border: 1px solid var(--rule);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    cursor: pointer;
+    flex-shrink: 0;
+    min-width: 52px;
+  }
+  .name-row .toggle.on {
+    background: var(--gold);
+    color: oklch(0.20 0.02 260);
+    border-color: var(--gold);
+  }
+
+  .modal-btns { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-btns button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 9px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
+    transition: all 0.15s;
+  }
+  .modal-btns .primary {
+    background: var(--gold);
+    color: oklch(0.18 0.02 260);
+    border-color: var(--gold);
+  }
+  .modal-btns .primary:hover { background: var(--crimson); border-color: var(--crimson); color: var(--ink); }
+
+  /* ═══════════════ TWEAKS PANEL ═══════════════ */
+  .tweaks {
+    display: none;
+    position: fixed;
+    bottom: 18px; right: 18px;
+    background: var(--paper);
+    border: 1px solid var(--paper-edge);
+    border-radius: 14px;
+    padding: 14px;
+    width: 240px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+    z-index: 50;
+    font-size: 12px;
+  }
+  .tweaks.open { display: block; }
+  .tweaks h4 {
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+    font-size: 18px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .tweaks h4 span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-ghost);
+    font-style: normal;
+  }
+  .tweak-row { margin: 10px 0; }
+  .tweak-row .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .tweak-opts { display: flex; gap: 4px; }
+  .tweak-opts button {
+    flex: 1;
+    padding: 6px 4px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    border-radius: 6px;
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: all 0.12s;
+  }
+  .tweak-opts button.on {
+    background: var(--gold);
+    color: oklch(0.18 0.02 260);
+    border-color: var(--gold);
+  }
+
+  @media (max-width: 380px) {
+    .cell { width: 32px; height: 32px; font-size: 17px; }
+    .row-label { font-size: 14px; }
+    .wordmark { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <header>
+    <div class="brand">
+      <div class="mark">c</div>
+      <div>
+        <div class="wordmark"><em>Clue</em></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.2em;color:var(--ink-ghost);text-transform:uppercase;margin-top:2px;">Hoja de Anotaciones · Deducción</div>
+      </div>
+    </div>
+    <div class="case-meta">
+      <div><span class="lbl">Caso Nº</span> <span class="val" id="caseNo">0421</span></div>
+      <div><span class="lbl">Ronda</span> <span class="val" id="roundNo">1</span></div>
+      <div><span class="lbl" id="dateStr">22 abr 2026</span></div>
+    </div>
+  </header>
+
+  <!-- ═══════════════ PLAYERS ═══════════════ -->
+  <div class="players" id="players"></div>
+  <div class="subbar">
+    <div class="turn-ind">
+      <span class="dot" id="turnDot"></span>
+      <span>Anotando como <strong id="turnName" style="color:var(--ink);font-weight:600;letter-spacing:0.02em;">—</strong></span>
+    </div>
+    <button id="editBtn">Editar jugadores ✎</button>
+  </div>
+
+  <!-- ═══════════════ SHEET ═══════════════ -->
+  <div class="sheet" id="sheet"></div>
+
+  <!-- ═══════════════ SOLUTION ═══════════════ -->
+  <div class="solution">
+    <div class="label">▲  Hipótesis de trabajo</div>
+    <div class="hyp" id="hyp">
+      Fue <span class="slot" id="hyp-0">sospechoso</span>, con <span class="slot" id="hyp-1">arma</span>, en <span class="slot" id="hyp-2">lugar</span>.
+    </div>
+  </div>
+
+  <!-- ═══════════════ LEGEND ═══════════════ -->
+  <div class="legend">
+    <div class="legend-items">
+      <span class="lg-item"><span class="g" style="font-style:italic;">✓</span> tiene carta</span>
+      <span class="lg-item"><span class="g">—</span> no tiene</span>
+      <span class="lg-item"><span class="g" style="opacity:0.55;font-style:italic;">?</span> sospecho</span>
+      <span class="lg-item"><span class="g" style="color:var(--gold);">★</span> en el sobre</span>
+    </div>
+  </div>
+
+  <div class="footer-actions">
+    <button id="nextRoundBtn">Siguiente ronda →</button>
+    <button id="resetBtn" class="danger">Reiniciar hoja</button>
+  </div>
+</main>
+
+<!-- ═══════════════ EDIT MODAL ═══════════════ -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="title">Editar jugadores</div>
+      <div class="subt">3 – 6 jugadores</div>
+    </div>
+    <div id="nameFields"></div>
+    <div class="modal-btns">
+      <button id="cancelBtn">Cancelar</button>
+      <button id="saveBtn" class="primary">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ TWEAKS ═══════════════ -->
+<div class="tweaks" id="tweaks">
+  <h4>Ajustes <span>en vivo</span></h4>
+  <div class="tweak-row">
+    <div class="lbl">Símbolos</div>
+    <div class="tweak-opts" data-key="glyphs">
+      <button data-val="classic">Clásico</button>
+      <button data-val="letters">Letras</button>
+      <button data-val="dots">Puntos</button>
+    </div>
+  </div>
+  <div class="tweak-row">
+    <div class="lbl">Densidad</div>
+    <div class="tweak-opts" data-key="density">
+      <button data-val="cozy">Cómoda</button>
+      <button data-val="tight">Compacta</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   Clue — original detective-notebook scoresheet
+   ═══════════════════════════════════════════════════ */
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "glyphs": "classic",
+  "density": "cozy"
+}/*EDITMODE-END*/;
+
+const STORAGE_KEY = 'clue.state.v2';
+
+/* Jugadores por defecto (del original) */
+const PLAYERS_DEFAULT = [
+  { name: 'J1', initial: '1' },
+  { name: 'J2', initial: '2' },
+  { name: 'J3', initial: '3' },
+  { name: 'J4', initial: '4' },
+  { name: 'J5', initial: '5' },
+  { name: 'J6', initial: '6' },
+];
+
+const SUSPECTS = [
+  'Verduzco',
+  'Mostaza',
+  'Moreno',
+  'Moradillo',
+  'Escarlata',
+  'Blanco',
+];
+
+const WEAPONS = [
+  'Candelabro',
+  'Daga',
+  'Tubo de plomo',
+  'Revólver',
+  'Soga',
+  'Llave inglesa',
+];
+
+const ROOMS = [
+  'Salón de baile',
+  'Sala de billar',
+  'Terraza',
+  'Comedor',
+  'Pasillo',
+  'Cocina',
+  'Biblioteca',
+  'Sala',
+  'Estudio',
+];
+
+const CATEGORIES = [
+  { id: 'who',   title: '¿Quién?',  en: 'Sospechosos', num: 'I',   items: SUSPECTS },
+  { id: 'what',  title: '¿Con qué?', en: 'Armas',       num: 'II',  items: WEAPONS },
+  { id: 'where', title: '¿Dónde?',   en: 'Lugares',     num: 'III', items: ROOMS },
+];
+
+const GLYPH_SETS = {
+  classic: { has: '✓', no: '—', maybe: '?' },
+  letters: { has: 'H', no: 'N', maybe: '·' },
+  dots:    { has: '●', no: '○', maybe: '◐' },
+};
+const STATES = ['', 'has', 'maybe', 'no']; // cycle order
+
+/* ── State ── */
+let state = {
+  players: PLAYERS_DEFAULT.map((p, i) => ({
+    ...p,
+    enabled: i < 4, // 4 by default
+  })),
+  active: 0,
+  round: 1,
+  caseNo: Math.floor(1000 + Math.random() * 8999).toString().padStart(4, '0'),
+  // cells keyed as `${catId}.${rowIdx}.${playerIdx}` → stateKey
+  cells: {},
+  // solved (envelope) keyed as `${catId}.${rowIdx}` → true
+  solved: {},
+  tweaks: { ...TWEAK_DEFAULTS },
+};
+
+/* ── Load persisted ── */
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    state = { ...state, ...parsed, tweaks: { ...TWEAK_DEFAULTS, ...(parsed.tweaks || {}) } };
+  }
+} catch {}
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+/* ── Helpers ── */
+function getPlayerColor(i) {
+  return `var(--p${i})`;
+}
+function activePlayerIndices() {
+  return state.players.map((p, i) => p.enabled ? i : -1).filter(i => i >= 0);
+}
+function activePlayer() {
+  // if the current active is disabled, jump to first enabled
+  if (!state.players[state.active]?.enabled) {
+    state.active = activePlayerIndices()[0] ?? 0;
+  }
+  return state.active;
+}
+
+/* ═══════════════ RENDER ═══════════════ */
+function renderPlayers() {
+  const el = document.getElementById('players');
+  el.innerHTML = '';
+  state.players.forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'player' + (i === state.active && p.enabled ? ' active' : '');
+    btn.style.setProperty('--_c', getPlayerColor(i));
+    btn.dataset.empty = !p.enabled;
+    btn.innerHTML = `
+      <div class="avatar">${p.initial || (p.name[0] || '·').toUpperCase()}</div>
+      <div class="pname">${p.enabled ? escape(p.name) : '—'}</div>
+    `;
+    btn.onclick = () => {
+      if (!p.enabled) return;
+      state.active = i;
+      renderPlayers();
+      renderSheet();
+      renderSubbar();
+      save();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderSubbar() {
+  const p = state.players[activePlayer()];
+  const dot = document.getElementById('turnDot');
+  dot.style.background = getPlayerColor(activePlayer());
+  document.getElementById('turnName').textContent = p?.name || '—';
+  document.getElementById('turnName').style.color = getPlayerColor(activePlayer());
+  document.getElementById('caseNo').textContent = state.caseNo;
+  document.getElementById('roundNo').textContent = state.round;
+  document.getElementById('dateStr').textContent = new Date().toLocaleDateString('es-ES', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function renderSheet() {
+  const sheet = document.getElementById('sheet');
+  sheet.innerHTML = '';
+  const act = activePlayer();
+  const enabled = activePlayerIndices();
+  const glyphs = GLYPH_SETS[state.tweaks.glyphs] || GLYPH_SETS.classic;
+
+  CATEGORIES.forEach((cat, ci) => {
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `
+      <div class="num">${cat.num}</div>
+      <div class="title">${cat.title}</div>
+      <div class="title-en">${cat.en}</div>
+    `;
+    sheet.appendChild(head);
+
+    // turn strip — shows active column
+    const strip = document.createElement('div');
+    strip.className = 'turn-strip';
+    const bead = document.createElement('div');
+    bead.className = 'bead';
+    bead.style.setProperty('--_c', getPlayerColor(act));
+    strip.appendChild(bead);
+    sheet.appendChild(strip);
+
+    const rows = document.createElement('div');
+    rows.className = 'rows';
+
+    cat.items.forEach((label, ri) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const solvedKey = `${cat.id}.${ri}`;
+      if (state.solved[solvedKey]) row.classList.add('solved');
+
+      const lbl = document.createElement('div');
+      lbl.className = 'row-label';
+      lbl.innerHTML = `
+        <span class="idx">${String(ri + 1).padStart(2, '0')}</span>
+        <span>${escape(label)}</span>
+        <button class="envelope-btn" title="Marcar como en el sobre">★</button>
+      `;
+      lbl.querySelector('.envelope-btn').onclick = (e) => {
+        e.stopPropagation();
+        state.solved[solvedKey] = !state.solved[solvedKey];
+        renderSheet();
+        renderSolution();
+        save();
+      };
+      row.appendChild(lbl);
+
+      const cells = document.createElement('div');
+      cells.className = 'cells';
+      state.players.forEach((p, pi) => {
+        if (!p.enabled) return;
+        const cell = document.createElement('button');
+        cell.className = 'cell' + (pi === act ? ' active-col is-turn' : '');
+        cell.style.setProperty('--_c', getPlayerColor(pi));
+        const key = `${cat.id}.${ri}.${pi}`;
+        const st = state.cells[key] || '';
+        if (st) {
+          cell.dataset.state = st;
+          const glyph = document.createElement('span');
+          glyph.className = 'glyph';
+          glyph.textContent = glyphs[st];
+          cell.appendChild(glyph);
+        }
+        cell.onclick = () => cycleCell(cat.id, ri, pi);
+        cells.appendChild(cell);
+      });
+
+      row.appendChild(cells);
+      rows.appendChild(row);
+    });
+
+    sheet.appendChild(rows);
+
+    // position bead after render
+    requestAnimationFrame(() => {
+      const firstCell = rows.querySelector('.cell.is-turn');
+      if (!firstCell || !strip.parentElement) return;
+      const stripRect = strip.getBoundingClientRect();
+      const cellRect = firstCell.getBoundingClientRect();
+      const left = cellRect.left - stripRect.left;
+      bead.style.left = `${left}px`;
+      bead.style.width = `${cellRect.width}px`;
+    });
+  });
+}
+
+function cycleCell(catId, ri, pi) {
+  const act = activePlayer();
+  if (pi !== act) {
+    // switch to that player instead of editing
+    state.active = pi;
+    renderPlayers(); renderSheet(); renderSubbar(); save();
+    return;
+  }
+  const key = `${catId}.${ri}.${pi}`;
+  const cur = state.cells[key] || '';
+  const nextIdx = (STATES.indexOf(cur) + 1) % STATES.length;
+  const next = STATES[nextIdx];
+  if (next === '') delete state.cells[key];
+  else state.cells[key] = next;
+  renderSheet();
+  renderSolution();
+  save();
+}
+
+function renderSolution() {
+  CATEGORIES.forEach((cat, ci) => {
+    const slot = document.getElementById('hyp-' + ci);
+    if (!slot) return;
+    // look for items marked solved first
+    const solvedItem = cat.items.find((_, ri) => state.solved[`${cat.id}.${ri}`]);
+    if (solvedItem) {
+      slot.textContent = solvedItem;
+      slot.classList.add('filled');
+      return;
+    }
+    // otherwise infer: item that no enabled player "has", and all enabled players have at least one "no" for? Simplified: item that no one 'has' where other items have been claimed
+    const enabled = activePlayerIndices();
+    const heldItems = cat.items.map((_, ri) =>
+      enabled.some(pi => state.cells[`${cat.id}.${ri}.${pi}`] === 'has')
+    );
+    const heldCount = heldItems.filter(Boolean).length;
+    if (heldCount === cat.items.length - 1) {
+      const unheldIdx = heldItems.findIndex(h => !h);
+      slot.textContent = cat.items[unheldIdx];
+      slot.classList.add('filled');
+    } else {
+      slot.textContent = { who: 'sospechoso', what: 'arma', where: 'lugar' }[cat.id];
+      slot.classList.remove('filled');
+    }
+  });
+}
+
+/* ═══════════════ MODAL ═══════════════ */
+function openEdit() {
+  const c = document.getElementById('nameFields');
+  c.innerHTML = '';
+  state.players.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'name-row';
+    row.innerHTML = `
+      <div class="chip ${p.enabled ? '' : 'dis'}" style="--_c: var(--p${i})">${(p.initial || p.name[0] || '·').toUpperCase()}</div>
+      <input type="text" maxlength="14" value="${p.enabled ? escape(p.name) : ''}" placeholder="Jugador ${i+1}" ${p.enabled ? '' : 'disabled'} data-i="${i}">
+      <button class="toggle ${p.enabled ? 'on' : ''}" data-i="${i}">${p.enabled ? 'SÍ' : 'NO'}</button>
+    `;
+    const toggle = row.querySelector('.toggle');
+    const input = row.querySelector('input');
+    const chip = row.querySelector('.chip');
+    toggle.onclick = () => {
+      const now = !toggle.classList.contains('on');
+      // enforce 3-6
+      const enabledCount = [...document.querySelectorAll('#nameFields .toggle.on')].length;
+      if (now === false && enabledCount <= 3) { input.focus(); return; }
+      if (now === true && enabledCount >= 6) return;
+      toggle.classList.toggle('on', now);
+      toggle.textContent = now ? 'SÍ' : 'NO';
+      input.disabled = !now;
+      chip.classList.toggle('dis', !now);
+      if (now && !input.value) input.value = PLAYERS_DEFAULT[i].name;
+    };
+    c.appendChild(row);
+  });
+  document.getElementById('overlay').classList.add('open');
+}
+function closeEdit() { document.getElementById('overlay').classList.remove('open'); }
+function saveEdit() {
+  document.querySelectorAll('#nameFields .name-row').forEach((row, i) => {
+    const on = row.querySelector('.toggle').classList.contains('on');
+    const val = row.querySelector('input').value.trim() || PLAYERS_DEFAULT[i].name;
+    state.players[i].enabled = on;
+    state.players[i].name = val;
+    state.players[i].initial = val[0].toUpperCase();
+    });
+    if (!state.players[state.active].enabled) state.active = activePlayerIndices()[0] || 0;
+  closeEdit();
+  renderPlayers(); renderSheet(); renderSubbar(); renderSolution();
+  save();
+}
+
+/* ═══════════════ TWEAKS ═══════════════ */
+window.addEventListener('message', (e) => {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (e.data.type === '__activate_edit_mode') document.getElementById('tweaks').classList.add('open');
+  if (e.data.type === '__deactivate_edit_mode') document.getElementById('tweaks').classList.remove('open');
+});
+setTimeout(() => {
+  try { window.parent.postMessage({type: '__edit_mode_available'}, '*'); } catch {}
+}, 50);
+
+function applyTweaks() {
+  document.body.dataset.density = state.tweaks.density;
+  if (state.tweaks.density === 'tight') {
+    document.documentElement.style.setProperty('--row-h', '32px');
+  } else {
+    document.documentElement.style.removeProperty('--row-h');
+  }
+  document.querySelectorAll('#tweaks .tweak-opts').forEach(opts => {
+    const key = opts.dataset.key;
+    opts.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('on', b.dataset.val === state.tweaks[key]);
+    });
+  });
+  renderSheet();
+}
+
+document.querySelectorAll('#tweaks .tweak-opts button').forEach(btn => {
+  btn.onclick = () => {
+    const key = btn.parentElement.dataset.key;
+    const val = btn.dataset.val;
+    state.tweaks[key] = val;
+    applyTweaks();
+    try {
+      window.parent.postMessage({type: '__edit_mode_set_keys', edits: { [key]: val }}, '*');
+    } catch {}
+    save();
+  };
+});
+
+/* ═══════════════ HELPERS ═══════════════ */
+function escape(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* ═══════════════ WIRE UP ═══════════════ */
+document.getElementById('editBtn').onclick = openEdit;
+document.getElementById('cancelBtn').onclick = closeEdit;
+document.getElementById('saveBtn').onclick = saveEdit;
+document.getElementById('overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'overlay') closeEdit();
+});
+document.getElementById('nextRoundBtn').onclick = () => {
+  state.round++;
+  renderSubbar();
+  save();
+};
+document.getElementById('resetBtn').onclick = () => {
+  if (!confirm('¿Reiniciar la hoja? Los jugadores se conservan.')) return;
+  state.cells = {};
+  state.solved = {};
+  state.round = 1;
+  state.caseNo = Math.floor(1000 + Math.random() * 8999).toString().padStart(4, '0');
+  renderSheet(); renderSubbar(); renderSolution();
+  save();
+};
+
+/* Repo bead position on resize */
+window.addEventListener('resize', () => renderSheet());
+
+/* ── Init ── */
+applyTweaks();
+renderPlayers();
+renderSheet();
+renderSubbar();
+renderSolution();
+</script>
+</body>
+</html>
