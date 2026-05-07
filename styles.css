@@ -1,4 +1,4 @@
-  :root {
+  :root {/* rojo    */
     /* Dark detective palette — deep ink navy w/ warm accents */
     --paper:      oklch(0.19 0.018 260);  /* main bg */
     --paper-2:    oklch(0.23 0.020 260);  /* cards */
